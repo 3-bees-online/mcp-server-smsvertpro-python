@@ -76,7 +76,7 @@ def validate_sender(sender: str) -> str:
 def validate_campaign_id(campaign_id: str) -> str:
     """Valide un identifiant de campagne."""
     cleaned = campaign_id.strip()
-    if not cleaned or not cleaned.isalnum():
+    if not cleaned or not re.match(r'^[\w\-]+$', cleaned):
         raise ValueError(f"Identifiant de campagne invalide : '{campaign_id}'")
     return cleaned
 
@@ -218,7 +218,7 @@ def verify_number(list_id: str) -> str:
         list_id: L'identifiant de la liste de contacts à vérifier
     """
     cleaned = list_id.strip()
-    if not cleaned or not cleaned.isalnum():
+    if not cleaned or not re.match(r'^[\w\-]+$', cleaned):
         return f"Erreur : identifiant de liste invalide : '{list_id}'"
 
     result = call_api(
