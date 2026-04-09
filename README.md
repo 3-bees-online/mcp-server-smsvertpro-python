@@ -72,6 +72,7 @@ Ajoutez la configuration MCP dans les paramètres de votre éditeur en pointant 
 | `get_blacklist` | Liste des désabonnements (STOP) |
 | `generate_otp` | Envoyer un code OTP par SMS |
 | `verify_otp` | Vérifier un code OTP |
+| `cancel_sms` | Annuler un SMS programmé ou une campagne |
 
 ## Exemples d'utilisation
 
