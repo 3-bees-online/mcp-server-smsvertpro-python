@@ -242,10 +242,13 @@ def cancel_sms(campaign_id: str, sms_id: str = "") -> str:
 
     Seuls les SMS en attente d'envoi (programmés) peuvent être annulés.
     Les crédits sont automatiquement recrédités sur le compte.
+    IMPORTANT : le campaign_id est TOUJOURS requis. Il est retourné dans la
+    réponse de send_sms (champ 'id'). Pour annuler un SMS spécifique,
+    fournir aussi le sms_id en plus du campaign_id.
 
     Args:
-        campaign_id: L'identifiant de la campagne à annuler
-        sms_id: Optionnel. L'identifiant d'un SMS spécifique à annuler dans la campagne.
+        campaign_id: L'identifiant de la campagne (retourné par send_sms). OBLIGATOIRE.
+        sms_id: L'identifiant d'un SMS spécifique à annuler dans la campagne.
                 Si non fourni, toute la campagne est annulée.
     """
     try:
