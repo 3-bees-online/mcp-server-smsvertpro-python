@@ -97,7 +97,6 @@ Les numéros de téléphone doivent être au **format international sans le `+`*
 - Validation des numéros de téléphone (format, longueur)
 - Validation de l'expéditeur (alphanumérique, 11 caractères max)
 - Validation des codes OTP (chiffres uniquement)
-- Limite du nombre de destinataires par envoi (500 max)
 - Votre token API reste sur votre machine, il n'est jamais partagé avec l'agent IA
 - Le serveur communique uniquement avec `https://www.smsvertpro.com/api/v2/`
 - Pour les SMS marketing, ajoutez `STOP 36173` à la fin du message (obligation légale)
