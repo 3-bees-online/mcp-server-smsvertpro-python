@@ -153,7 +153,8 @@ def send_sms(to: list[str], message: str, sender: str, delay: str = "") -> str:
         delay = delay.strip()
         if not DELAY_PATTERN.match(delay):
             return "Erreur : format de date invalide. Attendu : 'YYYY-MM-DD HH:MM'"
-        payload["message"]["delay"] = delay
+        payload["message"]["delay"] = delay + ":00"
+        payload["message"]["delay_cancel"] = True
 
     result = call_api(payload)
 
