@@ -237,6 +237,46 @@ def get_blacklist() -> str:
 
 
 @mcp.tool()
+def cancel_sms(campaign_id: str, sms_id: str = "") -> str:
+    """Annule un SMS programmé ou une campagne entière.
+
+    Seuls les SMS en attente d'envoi (programmés) peuvent être annulés.
+    Les crédits sont automatiquement recrédités sur le compte.
+
+    Args:
+        campaign_id: L'identifiant de la campagne à annuler
+        sms_id: Optionnel. L'identifiant d'un SMS spécifique à annuler dans la campagne.
+                Si non fourni, toute la campagne est annulée.
+    """
+    try:
+        campaign_id = validate_campaign_id(campaign_id)
+    except ValueError as e:
+        return f"Erreur de validation : {e}"
+
+    payload = {"request": "cancel", "campaign_id": campaign_id}
+
+    if sms_id:
+        sms_id = sms_id.strip()
+        if not re.match(r'^[\w\-]+$', sms_id):
+            return f"Erreur : identifiant SMS invalide : '{sms_id}'"
+        payload["sms_id"] = sms_id
+
+    result = call_api(payload)
+
+    status = result.get("status", "")
+    if status == "CANCEL_OK":
+        return (
+            f"Annulation réussie.\n"
+            f"Crédits recrédités. Nouveau solde : {result.get('credits', '?')} crédits."
+        )
+    if status == "INVALID_SMS":
+        return "Erreur : SMS introuvable ou déjà envoyé."
+    if status == "NO_SMS_FOUND":
+        return "Erreur : aucun SMS en attente trouvé pour cette campagne."
+    return f"Erreur d'annulation : {status}\n{json.dumps(result)}"
+
+
+@mcp.tool()
 def generate_otp(to: str, sender: str) -> str:
     """Génère et envoie un code OTP par SMS pour l'authentification 2FA.
 
