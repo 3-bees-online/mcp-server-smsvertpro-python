@@ -102,10 +102,10 @@ def call_api(payload: dict) -> dict:
         return {"status": "ERROR", "error": "Timeout API (30s)"}
     except httpx.HTTPStatusError as e:
         return {"status": "HTTP_ERROR", "code": e.response.status_code}
-    except httpx.RequestError as e:
-        return {"status": "REQUEST_ERROR", "error": str(e)}
+    except httpx.RequestError:
+        return {"status": "REQUEST_ERROR", "error": "API request failed"}
     except json.JSONDecodeError:
-        return {"status": "PARSE_ERROR", "raw": response.text[:500]}
+        return {"status": "PARSE_ERROR", "error": "Invalid API response"}
 
 
 # ─── Tools MCP ───────────────────────────────────────────────────
@@ -166,7 +166,7 @@ def send_sms(to: list[str], message: str, sender: str, delay: str = "") -> str:
             f"Nombre de SMS : {result.get('nbsms', '?')}\n"
             f"Date : {result.get('date', '?')}"
         )
-    return f"Erreur d'envoi : {result.get('status', 'Inconnu')}\n{json.dumps(result)}"
+    return f"Erreur d'envoi : {result.get('status', 'Inconnu')}"
 
 
 @mcp.tool()
@@ -176,7 +176,7 @@ def check_credits() -> str:
     result = call_api({"request": "credits"})
     if "credits" in result:
         return f"Solde : {result['credits']} crédits SMS disponibles."
-    return f"Erreur : {json.dumps(result)}"
+    return f"Erreur : {result.get('status', 'Inconnu')}"
 
 
 @mcp.tool()
@@ -276,7 +276,7 @@ def cancel_sms(campaign_id: str, sms_id: str = "") -> str:
         return "Erreur : SMS introuvable ou déjà envoyé."
     if status == "NO_SMS_FOUND":
         return "Erreur : aucun SMS en attente trouvé pour cette campagne."
-    return f"Erreur d'annulation : {status}\n{json.dumps(result)}"
+    return f"Erreur d'annulation : {status}"
 
 
 @mcp.tool()
@@ -300,7 +300,7 @@ def generate_otp(to: str, sender: str) -> str:
             f"Code OTP envoyé par SMS au {to}. "
             "Demandez à l'utilisateur de saisir le code reçu."
         )
-    return f"Erreur OTP : {json.dumps(result)}"
+    return f"Erreur OTP : {result.get('status', 'Inconnu')}"
 
 
 @mcp.tool()
