@@ -85,11 +85,15 @@ def validate_campaign_id(campaign_id: str) -> str:
 
 
 def call_api(payload: dict) -> dict:
-    """Appelle l'API SMS Vert Pro V2 de manière sécurisée."""
+    """Appelle l'API SMS Vert Pro V2."""
+    payload = dict(payload)
+    endpoint = payload.pop("request", "")
+    url = API_URL.rstrip("/") + "/" + endpoint
+
     try:
         with httpx.Client(timeout=API_TIMEOUT, verify=True) as client:
             response = client.post(
-                API_URL,
+                url,
                 json=payload,
                 headers={
                     "Content-Type": "application/json",
