@@ -334,6 +334,95 @@ def verify_otp(to: str, code: str) -> str:
     return f"Code OTP invalide ou expiré. Statut : {status}"
 
 
+# ─── GSM-7 charset (RFC complet) ─────────────────────────────────
+
+_GSM7_CHARS = frozenset(
+    "@£$¥èéùìòÇ\nØø\rÅå"
+    "Δ_ΦΓΛΩΠΨΣΘΞ\x1bÆæßÉ"
+    " !\"#¤%&'()*+,-./"
+    "0123456789:;<=>?"
+    "¡ABCDEFGHIJKLMNO"
+    "PQRSTUVWXYZÄÖÑÜ§"
+    "¿abcdefghijklmno"
+    "pqrstuvwxyzäöñüà"
+    "\f^{}\\[~]|€"
+)
+
+
+# Extension chars: each one costs 2 units (escape \x1B + the char).
+_GSM7_EXT = frozenset("\f^{}\\[~]|€")
+
+
+def _is_gsm7(message: str) -> bool:
+    return all(c in _GSM7_CHARS for c in message)
+
+
+def _gsm7_length(message: str) -> int:
+    """Effective billable GSM-7 length: extension chars count as 2."""
+    return sum(2 if c in _GSM7_EXT else 1 for c in message)
+
+
+def _count_sms_parts(message: str) -> int:
+    length = _gsm7_length(message)
+    if length <= 160:
+        return 1
+    return -(-length // 153)  # ceil division
+
+
+@mcp.tool()
+def count_sms_parts(message: str) -> str:
+    """Calcule localement combien de SMS (parts) un message va consommer.
+
+    100% local, n'envoie rien, ne consomme aucun crédit. Permet à l'agent IA
+    d'estimer le coût d'une campagne avant d'appeler send_sms : 1 SMS = 160
+    caractères GSM-7 (153 si concaténé en plusieurs parts).
+
+    Par défaut, SMS Vert Pro envoie uniquement en GSM-7. Si le message contient
+    des emojis ou des caractères non-GSM (â, ê, î, ô, û, ç minuscule, ï, ë...),
+    il sera REJETÉ par l'API au moment de l'envoi (status EMOJI_NOT_ALLOWED).
+    Le support Unicode est activable sur demande auprès du support SMS Vert Pro.
+
+    Args:
+        message: Texte du SMS à analyser
+    """
+    if not message:
+        return "Message vide : 0 part, 0 caractères."
+
+    chars = len(message)
+
+    if not _is_gsm7(message):
+        return (
+            f"REJET PRÉVU : le message contient des caractères non-GSM-7. "
+            f"SMS Vert Pro rejettera l'envoi avec le code 'EMOJI_NOT_ALLOWED'.\n\n"
+            f"Caractères : {chars}\n\n"
+            f"Caractères incompatibles à retirer ou remplacer : emojis, "
+            f"accents circonflexes (â ê î ô û), ç minuscule (utiliser 'c'), "
+            f"ï, ë, ÿ. Les accents GSM-7 acceptés sont : é è à ù É Ç (majuscule).\n\n"
+            f"Reprendre la rédaction sans ces caractères, puis rappeler "
+            f"count_sms_parts pour estimer le coût final. "
+            f"(Le support Unicode est activable sur demande auprès du support SMS Vert Pro.)"
+        )
+
+    billing_length = _gsm7_length(message)
+    parts = _count_sms_parts(message)
+    per_part = 160 if parts == 1 else 153
+    extra_count = billing_length - chars
+    ext_note = (
+        f"\nLongueur facturée : {billing_length} unités GSM-7 "
+        f"(présence de {extra_count} caractère(s) d'extension comme € {{ }} [ ] | ~ ^ \\ qui comptent 2)"
+        if extra_count > 0
+        else ""
+    )
+    return (
+        f"Encodage : GSM-7 (compatible SMS Vert Pro)\n"
+        f"Caractères tapés : {chars}{ext_note}\n"
+        f"Parts (SMS) : {parts}\n"
+        f"Capacité par part : {per_part} caractères\n\n"
+        f"Coût pour 1 destinataire : {parts} crédit(s). "
+        f"Pour estimer une campagne, multiplier par le nombre de destinataires."
+    )
+
+
 # ─── Démarrage ───────────────────────────────────────────────────
 
 if __name__ == "__main__":
